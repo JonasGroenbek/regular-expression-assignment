@@ -9,14 +9,20 @@ public class NFA {
     private final int m;       // number of characters in regular expression
 
     /**
-     * Initializes the NFA from the specified regular expression.
-     *
-     * @param  regexp the regular expression
+     * Creates the non-deterministic finite automaton based on a provided regularexpression.
+     * This method supports 3 operators, the or "|", capturing group "()" and zero or more "*".
+     * If more quantifiers, character classes etc. Should be implemented in our regular expression
+     * engine, it should be included in the NFA since it is responsible for creating the graph
+     * for the underlying non-deterministic flow of the operations made for matching on the
+     * provided regular expression.
+     * @param regexp
      */
     public NFA(String regexp) {
         this.regexp = regexp;
         m = regexp.length();
-        Stack<Integer> ops = new Stack<Integer>();
+        //this stack is the operations to be made in order to match the string against the regular expression
+        Stack<Integer> ops = new Stack();
+        //creates a graph with the amount of characters in the regular expression + 1 vertices
         graph = new Digraph(m+1);
         for (int i = 0; i < m; i++) {
             int lp = i;
@@ -50,14 +56,10 @@ public class NFA {
 
     /**
      * Returns true if the text is matched by the regular expression.
-     *
-     * @param  txt the text
-     * @return {@code true} if the text is matched by the regular expression,
-     *         {@code false} otherwise
      */
     public boolean recognizes(String txt) {
         DirectedDFS dfs = new DirectedDFS(graph, 0);
-        Bag<Integer> pc = new Bag<Integer>();
+        Bag<Integer> pc = new Bag();
         for (int v = 0; v < graph.V(); v++)
             if (dfs.marked(v)) pc.add(v);
 
@@ -66,14 +68,14 @@ public class NFA {
             if (txt.charAt(i) == '*' || txt.charAt(i) == '|' || txt.charAt(i) == '(' || txt.charAt(i) == ')')
                 throw new IllegalArgumentException("text contains the metacharacter '" + txt.charAt(i) + "'");
 
-            Bag<Integer> match = new Bag<Integer>();
+            Bag<Integer> match = new Bag();
             for (int v : pc) {
                 if (v == m) continue;
                 if ((regexp.charAt(v) == txt.charAt(i)) || regexp.charAt(v) == '.')
                     match.add(v+1);
             }
             dfs = new DirectedDFS(graph, match);
-            pc = new Bag<Integer>();
+            pc = new Bag();
             for (int v = 0; v < graph.V(); v++)
                 if (dfs.marked(v)) pc.add(v);
 
@@ -87,16 +89,20 @@ public class NFA {
         return false;
     }
 
-    /**
-     * Unit tests the {@code NFA} data type.
-     *
-     * @param args the command-line arguments
-     */
     public static void main(String[] args) {
-        String regexp = "(" + args[0] + ")";
-        String txt = args[1];
-        NFA nfa = new NFA(regexp);
-        System.out.println(nfa.recognizes(txt));
+        if(args.length > 1) {
+            System.out.println("running with command line arguments");
+            String regexp = "(" + args[0] + ")";
+            String txt = args[1];
+            NFA nfa = new NFA(regexp);
+            System.out.println(nfa.recognizes(txt));
+        } else {
+            System.out.println("running with predefined regular expression and test string");
+            String testRegex = "(aa*b)";
+            String testString = "aaaab";
+            NFA nfa = new NFA(testRegex);
+            System.out.println(nfa.recognizes(testString));
+        }
     }
 
 }
